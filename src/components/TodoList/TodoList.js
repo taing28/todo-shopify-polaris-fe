@@ -1,14 +1,17 @@
 import { LegacyCard, ResourceItem, ResourceList } from "@shopify/polaris";
 import { TodoItem } from "./Todo";
+import { CreateTodoModal } from "./CreateTodoModal";
 import { useState } from "react";
 import { CheckboxIcon, DeleteIcon, XCircleIcon } from "@shopify/polaris-icons";
 import useUpdate from "../../hooks/useUpdateApi";
 import useCreate from "../../hooks/useCreateApi";
+import useFetchApi from "../../hooks/useFetchApi";
 
-export const TodoList = ({ todos, setTodos }) => {
+export const TodoList = ({ modalActive, toggleModal }) => {
     const [selectedItems, setSelectedItems] = useState([]);
+    const { data: todos, loading, setData: setTodos } = useFetchApi('/todos');
     const { updateData: updateTodos, loading: updateLoading } = useUpdate('/todos');
-    const { createData: deleteTodos, loading: createLoading } = useCreate('/todos/delete-many');
+    const { createData: deleteTodos, loading: deleteLoading } = useCreate('/todos/delete-many');
 
     const handleComplete = async () => {
         try {
@@ -83,18 +86,33 @@ export const TodoList = ({ todos, setTodos }) => {
         </ResourceItem>
     );
 
+    const emptyState = (
+        <LegacyCard.Section>
+            <p>No todos found</p>
+        </LegacyCard.Section>
+    );
+
     return (
-        <LegacyCard>
-            <ResourceList
-                loading={updateLoading || createLoading}
-                resourceName={resourceName}
-                items={todos || []}
-                renderItem={renderItem}
-                selectedItems={selectedItems}
-                onSelectionChange={setSelectedItems}
-                promotedBulkActions={promotedBulkActions}
-                bulkActions={bulkActions}
+        <>
+            <LegacyCard>
+                <ResourceList
+                    loading={loading || updateLoading || deleteLoading}
+                    resourceName={resourceName}
+                    items={todos || []}
+                    renderItem={renderItem}
+                    selectedItems={selectedItems}
+                    onSelectionChange={setSelectedItems}
+                    promotedBulkActions={promotedBulkActions}
+                    bulkActions={bulkActions}
+                    emptyState={emptyState}
+                />
+            </LegacyCard>
+
+            <CreateTodoModal
+                active={modalActive}
+                toggleModal={toggleModal}
+                onSuccess={setTodos}
             />
-        </LegacyCard>
+        </>
     );
 }
